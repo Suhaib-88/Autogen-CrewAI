@@ -5,8 +5,26 @@ import yaml
 import autogen
 from pathlib import Path
 from tools.base_tool import BaseTool
-from tools.code_docs_search_tool import  code_docs_search_tool
-from tools.csv_search_tool import csv_search_tool
+from tools.code_docs_search_tool.code_docs_search_tool import  CodeDocsSearchTool
+from tools.csv_search_tool.csv_search_tool import CSVSearchTool
+from tools.json_search_tool.json_search_tool import JSONSearchTool
+from tools.mdx_search_tool.mdx_search_tool import MDXSearchTool
+from tools.pdf_search_tool.pdf_search_tool import PDFSearchTool
+from tools.rag.rag_tool import RagTool
+from tools.txt_search_tool.txt_search_tool import TXTSearchTool
+from tools.website_search.website_search_tool import WebsiteSearchTool
+from tools.scrape_website_tool.scrape_website_tool import ScrapeWebsiteTool
+from tools.youtube_channel_search_tool.youtube_channel_search_tool import YoutubeChannelSearchTool
+from tools.youtube_video_search_tool.youtube_video_search_tool import YoutubeVideoSearchTool
+from tools.directory_read_tool.directory_read_tool import DirectoryReadTool
+from tools.file_read_tool.file_read_tool import FileReadTool
+from tools.docsx_search_tool.docsx_search_tool import DOCXSearchTool
+from tools.directory_search_tool.directory_search_tool import DirectorySearchTool
+from tools.xml_search_tool.xml_search_tool import XMLSearchTool
+from tools.scrape_element_from_website.scrape_element_from_website import ScrapeElementFromWebsiteTool
+
+
+
 from .inc.model import AIModel 
 from crewai import Agent, Task, Crew
 
@@ -73,6 +91,19 @@ class AgentsGenerator:
             'DirectorySearchTool': DirectorySearchTool(),
             "DOCXSearchTool":DOCXSearchTool(),
             "DirectoryReadTool": DirectoryReadTool(),
+            "FileReadTool": FileReadTool(),
+            "TXTSearchTool": TXTSearchTool(),
+            "JSONSearchTool": JSONSearchTool(),
+            "MDXSearchTool": MDXSearchTool(),
+            "PDFSearchTool": PDFSearchTool(),
+            "RagTool":RagTool(),
+            "WebsiteSearchTool":WebsiteSearchTool(),
+            "ScrapeElementFromWebsiteTool": ScrapeElementFromWebsiteTool(),
+            "ScrapeWebsiteTool": ScrapeWebsiteTool(),
+            "WebsiteSearchTool": WebsiteSearchTool(),
+            "XMLSearchTool": XMLSearchTool(),
+            "YoutubeChannelSearchTool": YoutubeChannelSearchTool(),
+            "YoutubeVideoSearchTool": YoutubeVideoSearchTool(),
             ## todos
 
         }
@@ -124,7 +155,7 @@ class AgentsGenerator:
 
                 for task_name, task_details in details.get('tasks',{}).items():
                     description_filled= task_details['description'].format(topic=topic)
-                    expected_output_filed= task_details['expected_output'].format(topic=topic)
+                    expected_output_filled= task_details['expected_output'].format(topic=topic)
 
                     chat_task={
                         'recipient': agents[role],

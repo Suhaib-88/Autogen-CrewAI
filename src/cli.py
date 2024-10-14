@@ -1,6 +1,7 @@
 import os, subprocess, yaml, sys
 from agents_generator import AgentsGenerator
 from auto import AutoGenerator
+import gradio as gr
 
 class PraisonAI:
     def __init__(self,agent_file='agents.yaml', framework='', auto=False, init=False, agent_yaml=None) -> None:
@@ -140,14 +141,161 @@ class PraisonAI:
                 return result
         
 
-        # TODO: agentgen, autogen
+
+    def parse_args(self):
+        parser= argparse.ArgumentParser(description= "PraisonAI")
+        parser.add_argument('--framework', type=str, help= 'Framework to use')
+        parser.add_argument('--agent_file', type=str, help= 'Path to the agent file')
+        parser.add_argument('--auto', type=str, help= 'Auto generate')
+        parser.add_argument('--init', type=str, help= 'Initialize')
+        parser.add_argument('--ui', type=str, help= 'UI to use')
+        parser.add_argument('--chat', action= 'store_true', help= 'Chat interface')
+        parser.add_argument('--code', action= 'store_true', help= 'Code interface')
+        parser.add_argument('--realtime', action= 'store_true', help= 'Realtime interface')
+        parser.add_argument('--deploy', action= 'store_true', help= 'Deploy')
+        args, unknown_args= parser.parse_known_args()
 
 
+        if unknown_args and unknown_args[0] == '-b' and unknown_args[1] == 'api:app':
+            args.agent_file= 'agents.yaml'
+
+        if args.agent_file=='api:app' or args.agent_file=='/app/api:app':
+            args.agent_file= 'agents.yaml'
+
+        if args.agent_file== 'ui':
+            args.ui = 'chainlit'
+
+        if args.agent_file== 'chat':
+            args.ui = 'chainlit'
+            args.chat= True
+
+        if args.agent_file== 'code':
+            args.ui = 'chainlit'
+            args.code= True
+
+        if args.agent_file== 'realtime':
+            args.realtime= True
+
+        return args
+    
+
+    def create_chainlit_chat_interface(self):
+        if CHAINLIT_AVAILABLE:
+            import praisonai
+
+            os.environ['CHAINLIT_PORT']= '8084'
+            root_path= os.path.join(os.path.dirname(praisonai.__file__), '.praison')
+            os.environ['CHAINLIT_ROOT_PATH']= root_path
+            public_folder= os.path.join(os.path.dirname(praisonai.__file__), 'public')
+            if not os.path.exists(os.path.join(root_path, 'public')):
+                if os.path.exists(public_folder):
+                    shutil.copytree(public_folder, os.path.join(root_path, 'public'), dirs_exist_ok= True)
+                    
+                else:
+                    logger.warning('No public folder found')
+            else:
+                logging.info('Chainlit interface already exists')
+
+            chat_ui_path = os.path.join(os.path.dirname(praisonai.__file__), 'ui', 'chat.py')
+
+            chainlit_run([chat_ui_path])
+
+        else:
+            print('Chainlit is not available')
 
 
+    def create_code_interface(self):
+        if CHAINLIT_AVAILABLE:
+            import praisonai
+
+            os.environ['CHAINLIT_PORT']= '8086'
+            root_path= os.path.join(os.path.expanduser("~"), '.praison')
+            os.environ['CHAINLIT_ROOT_PATH']= root_path
+            public_folder= os.path.join(os.path.dirname(praisonai.__file__), 'public')
+            if not os.path.exists(os.path.join(root_path, 'public')):
+                if os.path.exists(public_folder):
+                    shutil.copytree(public_folder, os.path.join(root_path, 'public'), dirs_exist_ok= True)
+                    
+                else:
+                    logger.warning('No public folder found')
+            else:
+                logging.info('Chainlit interface already exists')
+
+            code_ui_path = os.path.join(os.path.dirname(praisonai.__file__), 'ui', 'code.py')
+            chainlit_run([code_ui_path])
+
+        else:
+            print('CODE Ui is not available')
 
 
+    def create_gradio_interface(self):
+        if GRADIO_AVAILABLE:
+            def generate_crew_and_kickoff_interface(auto_args, framework):
+                self.framework= framework
+                self.agent_file= 'test.yaml'
+                generator = AutoGenerator(topic = auto_args, framework = framework)
+                self.agent_file= generator.generate()
+                agents_generator= AgentsGenerator(self.agent_file, self.framework, self.config_list)
 
+                result= agents_generator.generate_crew_and_kickoff()
+                return result
+            
+            gr.Interface(fn= generate_crew_and_kickoff_interface, inputs= [gr.Textbox(lines=2, label='Auto Args'), gr.Dropdown(choices=['crewai', 'autogen'],label='Framework')], outputs= 'text', title= 'PraisonAI', description= 'PraisonAI is a framework for building AI agents').launch(share= True)
+
+        else:
+            print('Gradio is not available')
+
+
+    def create_chainlit_interface(self):
+        if CHAINLIT_AVAILABLE:
+            import praisonai
+
+            os.environ['CHAINLIT_PORT']= '8082'
+            public_folder= os.path.join(os.path.dirname(praisonai.__file__), 'public')
+            if not os.path.exists('public'):
+                if os.path.exists(public_folder):
+                    shutil.copytree(public_folder, os.path.join(root_path, 'public'), dirs_exist_ok= True)
+                    
+                else:
+                    logging.warning('No public folder found')
+            else:
+                logging.info('Chainlit interface already exists')
+
+            chat_ui_path = os.path.join(os.path.dirname(praisonai.__file__), 'chainlit_ui.py')
+            chainlit_run([chat_ui_path])
+
+        else:
+            print('Chainlit is not available')
+            
+            
+    def create_realtime_interface(self):
+        if CHAINLIT_AVAILABLE:
+            import praisonai
+
+            os.environ['CHAINLIT_PORT']= '8088'
+            root_path= os.path.join(os.path.expanduser("~"), '.praison')
+            os.environ['CHAINLIT_ROOT_PATH']= root_path
+            public_folder= os.path.join(os.path.dirname(praisonai.__file__), 'public')
+            if not os.path.exists(os.path.join(root_path, 'public')):
+                if os.path.exists(public_folder):
+                    shutil.copytree(public_folder, os.path.join(root_path, 'public'), dirs_exist_ok= True)
+                    
+                else:
+                    logging.warning('No public folder found')
+            else:
+                logging.info('Chainlit interface already exists')
+
+            realtime_ui_path = os.path.join(os.path.dirname(praisonai.__file__), 'ui', 'realtime.py')
+            chainlit_run([realtime_ui_path])
+
+        else:
+            print('Error Realtime interface is not available')
+            
+
+
+if __name__ == '__main__':
+    praison_ai= PraisonAI()
+    praison_ai.run()
 
 
 
